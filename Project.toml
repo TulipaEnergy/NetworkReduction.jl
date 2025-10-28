@@ -1,11 +1,6 @@
 name = "NetworkReduction"
 uuid = "8d6c9889-004b-5ffc-a588-babdd84958c6"
-authors = [
-    "Germán Morales-España <german.morales@tno.nl>",
-    " Juan Giraldo Chavarriaga <juan.giraldo@tno.nl>",
-    " Muhammad Numan <muhammad.numan@ucd.ie>",
-    " Ni Wang <ni.wang@tno.nl>",
-]
+authors = ["Germán Morales-España <german.morales@tno.nl>", " Juan Giraldo Chavarriaga <juan.giraldo@tno.nl>", " Muhammad Numan <muhammad.numan@ucd.ie>", " Ni Wang <ni.wang@tno.nl>"]
 version = "0.1.0"
 
 [deps]
@@ -20,4 +15,5 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
+Statistics = "1"
 julia = "1.10"
