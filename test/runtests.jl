@@ -1,5 +1,14 @@
 using NetworkReduction
 using Test
+using DataFrames
+using CSV
+
+# Folders names
+const INPUT_FOLDER = joinpath(@__DIR__, "inputs")
+const OUTPUT_FOLDER = joinpath(@__DIR__, "outputs")
+if !isdir(OUTPUT_FOLDER)
+    mkdir(OUTPUT_FOLDER)
+end
 
 #=
 Don't add your tests to runtests.jl. Instead, create files named
