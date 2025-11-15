@@ -1,25 +1,33 @@
 module NetworkReduction
 
-# Explicit imports with package prefixes for better code clarity and dependency management
-using XLSX: readxlsx, gettable
-using DataFrames: DataFrames
-using SparseArrays: SparseArrays, spzeros, sparse, SparseMatrixCSC
-using LinearAlgebra: inv, pinv, Matrix, complex, imag, deg2rad
-using CSV: write
-using Statistics: mean
-using JuMP:
-    JuMP,
-    Model,
-    @variable,
-    @objective,
-    @constraint,
-    optimize!,
-    value,
-    termination_status,
-    set_silent,
-    raw_status
-using Ipopt: Optimizer
-using MathOptInterface: OPTIMAL, LOCALLY_SOLVED
+using XLSX
+using DataFrames
+using SparseArrays
+using LinearAlgebra
+using CSV
+using Statistics
+using JuMP
+using Ipopt
+using MathOptInterface
+
+export load_excel_data,
+    clean_line_data,
+    process_tielines,
+    convert_line_to_pu!,
+    rename_buses,
+    form_ybus_with_shunt,
+    calculate_ptdfs_dc_power_flow,
+    calculate_all_ptdfs_original,
+    calculate_ptdfs_reduced,
+    calculate_ttc_from_ptdfs,
+    calculate_ttc_equivalent,
+    select_representative_nodes,
+    kron_reduce_ybus,
+    optimize_equivalent_capacities_qp,
+    debug_optimization_data,
+    export_bus_id_map,
+    export_detailed_line_info,
+    main_full_analysis
 
 # Data loading and cleaning
 include("data-loading.jl")

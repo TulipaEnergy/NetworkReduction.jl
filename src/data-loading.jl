@@ -9,23 +9,23 @@ Returns a dictionary containing DataFrames for lines, tielines, nodes, and gener
 function load_excel_data(file_path::String)
     xf = XLSX.readxlsx(file_path)
     data = Dict(
-        "lines" => DataFrames.DataFrame(XLSX.gettable(xf["Lines"])),
-        "tielines" => DataFrames.DataFrame(XLSX.gettable(xf["Tielines"])),
-        "nodes" => DataFrames.DataFrame(XLSX.gettable(xf["Nodes"])),
-        "generators" => DataFrames.DataFrame(XLSX.gettable(xf["Generators"])),
+        "lines" => DataFrame(XLSX.gettable(xf["Lines"])),
+        "tielines" => DataFrame(XLSX.gettable(xf["Tielines"])),
+        "nodes" => DataFrame(XLSX.gettable(xf["Nodes"])),
+        "generators" => DataFrame(XLSX.gettable(xf["Generators"])),
     )
     close(xf)
     return data
 end
 
 """
-    clean_line_data(lines_df::DataFrames.DataFrame)
+    clean_line_data(lines_df::DataFrame)
 
 Clean line data by removing self-loops and assigning fake EIC codes to missing entries.
 """
-function clean_line_data(lines_df::DataFrames.DataFrame)
+function clean_line_data(lines_df::DataFrame)
     lines_df[!, :IsTieLine] .= false
-    clean_df = DataFrames.filter(row -> row.From_node != row.To_node, lines_df)
+    clean_df = filter(row -> row.From_node != row.To_node, lines_df)
 
     missing_eic = findall(x -> ismissing(x) || x == "-", clean_df.EIC_Code)
     for (i, idx) in enumerate(missing_eic)
@@ -35,16 +35,15 @@ function clean_line_data(lines_df::DataFrames.DataFrame)
 end
 
 """
-    process_tielines(tielines_df::DataFrames.DataFrame)
+    process_tielines(tielines_df::DataFrame)
 
 Process tie-lines by sorting, removing duplicates, and handling missing EIC codes.
 """
-function process_tielines(tielines_df::DataFrames.DataFrame)
+function process_tielines(tielines_df::DataFrame)
     tielines_df[!, :IsTieLine] .= true
-    sorted_tielines = DataFrames.sort(tielines_df, :Length_km, rev = true)
-    unique_tielines = DataFrames.unique(sorted_tielines, :EIC_Code)
-    filtered_tielines =
-        DataFrames.filter(row -> row.From_node != row.To_node, unique_tielines)
+    sorted_tielines = sort(tielines_df, :Length_km, rev = true)
+    unique_tielines = unique(sorted_tielines, :EIC_Code)
+    filtered_tielines = filter(row -> row.From_node != row.To_node, unique_tielines)
 
     missing_eic = findall(x -> ismissing(x) || x == "-", filtered_tielines.EIC_Code)
     for (i, idx) in enumerate(missing_eic)
@@ -55,11 +54,11 @@ function process_tielines(tielines_df::DataFrames.DataFrame)
 end
 
 """
-    convert_line_to_pu!(lines_df::DataFrames.DataFrame, Sbase::Float64)
+    convert_line_to_pu!(lines_df::DataFrame, Sbase::Float64)
 
 Convert line parameters to per-unit values based on system base power.
 """
-function convert_line_to_pu!(lines_df::DataFrames.DataFrame, Sbase::Float64)
+function convert_line_to_pu!(lines_df::DataFrame, Sbase::Float64)
     lines_df[!, :R_pu] =
         [r / ((v^2) / Sbase) for (r, v) in zip(lines_df.R, lines_df.Voltage_level)]
     lines_df[!, :X_pu] =
@@ -78,20 +77,17 @@ Rename buses to uppercase, create numerical mapping, and convert data to per-uni
 Returns processed line DataFrames and node information.
 """
 function rename_buses(
-    nodes_df::DataFrames.DataFrame,
-    generators_df::DataFrames.DataFrame,
-    lines_df::DataFrames.DataFrame,
-    tie_lines_df::DataFrames.DataFrame,
+    nodes_df::DataFrame,
+    generators_df::DataFrame,
+    lines_df::DataFrame,
+    tie_lines_df::DataFrame,
     Sbase::Float64,
 )
 
-    DataFrames.transform!(nodes_df, :Bus => (x -> uppercase.(strip.(x)) => :Bus))
-    DataFrames.transform!(generators_df, :Bus => (x -> uppercase.(strip.(x)) => :Bus))
-    DataFrames.transform!(lines_df, [:From_node, :To_node] .=> (x -> uppercase.(strip.(x))))
-    DataFrames.transform!(
-        tie_lines_df,
-        [:From_node, :To_node] .=> (x -> uppercase.(strip.(x))),
-    )
+    transform!(nodes_df, :Bus => (x -> uppercase.(strip.(x)) => :Bus))
+    transform!(generators_df, :Bus => (x -> uppercase.(strip.(x)) => :Bus))
+    transform!(lines_df, [:From_node, :To_node] .=> (x -> uppercase.(strip.(x))))
+    transform!(tie_lines_df, [:From_node, :To_node] .=> (x -> uppercase.(strip.(x))))
 
     lines_df = convert_line_to_pu!(lines_df, Sbase)
     tie_lines_df = convert_line_to_pu!(tie_lines_df, Sbase)
@@ -101,7 +97,7 @@ function rename_buses(
         bus_map[bus_name] = idx
     end
 
-    node_data = DataFrames.DataFrame(
+    node_data = DataFrame(
         old_name = String[],
         new_id = Int[],
         PD_pu = Float64[],
@@ -121,10 +117,10 @@ function rename_buses(
         ismissing(value) ? 0.0 : value / Sbase
     end
 
-    for (idx, bus_row) in enumerate(DataFrames.eachrow(nodes_df))
+    for (idx, bus_row) in enumerate(eachrow(nodes_df))
         bus_name = bus_row.Bus
 
-        bus_node = DataFrames.filter(:Bus => x -> x == bus_name, nodes_df)
+        bus_node = filter(:Bus => x -> x == bus_name, nodes_df)
         isempty(bus_node) && error("Bus $bus_name not found in nodes DataFrame")
 
         push!(
@@ -137,7 +133,7 @@ function rename_buses(
                 bus_node.GS[1],
                 bus_node.BS[1],
                 bus_node.Vm[1],
-                LinearAlgebra.deg2rad(bus_node.Va[1]),
+                deg2rad(bus_node.Va[1]),
                 bus_node.baseKV[1],
                 bus_node.Type[1],
                 bus_node.Area[1],

@@ -20,8 +20,7 @@ Tuple containing:
 - equivalent_capacities_df: Optimized equivalent capacities
 
 # Data Directory
-By default uses: C:\\Users\\nomyk\\Desktop\\Julia\\NL_Data
-Modify the data_dir variable to change the location.
+Modify the input_data_dir and output_data_dir variables to change the location.
 
 # Output Files
 - Bus_ID_Map_QP.csv: Mapping of bus names to numerical IDs
@@ -32,17 +31,13 @@ Modify the data_dir variable to change the location.
 - Equivalent_Capacities_QP.csv: Optimized synthetic line capacities
 - TTC_Comparison_QP.csv: Comparison of original vs equivalent TTC values
 """
-function main_full_analysis()
+function main_full_analysis(input_data_dir::String, output_data_dir::String)
     println("="^50)
     println("STARTING FULL NETWORK PTDF, TTC, AND REDUCTION ANALYSIS (Canonical Direction)")
     println("="^50)
 
     # NOTE: Need to provide the correct file path for the data!
-    data_dir = raw"C:\Users\nomyk\Desktop\Julia\NL_Data"
-    file_path = joinpath(data_dir, "NL_HV_Network.xlsx")
-
-    # Create the directory if it doesn't exist
-    mkpath(data_dir)
+    file_path = joinpath(input_data_dir, "NL_HV_Network.xlsx")
 
     println("Loading data from: $file_path")
 
@@ -66,11 +61,11 @@ function main_full_analysis()
     println("Original Ybus matrix created: $n_buses×$n_buses")
 
     # --- EXPORT: Bus Map and Line Info (Step 1) ---
-    export_bus_id_map(node_info, joinpath(data_dir, "Bus_ID_Map_QP.csv"))
+    export_bus_id_map(node_info, joinpath(output_data_dir, "Bus_ID_Map_QP.csv"))
     export_detailed_line_info(
         numbered_lines,
         numbered_tielines,
-        joinpath(data_dir, "Line_Details_QP.csv"),
+        joinpath(output_data_dir, "Line_Details_QP.csv"),
     )
 
     # --- 1. REPRESENTATIVE NODE SELECTION ---
@@ -97,13 +92,13 @@ function main_full_analysis()
         optimize_equivalent_capacities_qp(ttc_results, ptdf_reduced_results)
 
     # Filter original TTCs to only include canonical RN-to-RN transactions for comparison
-    rn_orig_ids = DataFrames.unique(
-        DataFrames.vcat(
+    rn_orig_ids = unique(
+        vcat(
             ptdf_reduced_results.transaction_from_orig,
             ptdf_reduced_results.transaction_to_orig,
         ),
     )
-    ttc_rn_original = DataFrames.filter(
+    ttc_rn_original = filter(
         row ->
             (row.transaction_from in rn_orig_ids) &&
                 (row.transaction_to in rn_orig_ids) &&
@@ -119,7 +114,7 @@ function main_full_analysis()
             calculate_ttc_equivalent(ptdf_reduced_results, equivalent_capacities_df)
 
         # Join the two DataFrames for comparison
-        comparison_df = DataFrames.innerjoin(
+        comparison_df = innerjoin(
             ttc_rn_original,
             ttc_equivalent,
             on = [:transaction_from, :transaction_to],
@@ -135,8 +130,7 @@ function main_full_analysis()
             [isnan(x) ? 0.0 : x for x in comparison_df.TTC_Error_Pct]
 
         # Merge with bus names for readability
-        bus_name_map =
-            Dict(row.new_id => row.old_name for row in DataFrames.eachrow(node_info))
+        bus_name_map = Dict(row.new_id => row.old_name for row in eachrow(node_info))
 
         comparison_df[!, :From_Name] =
             [bus_name_map[id] for id in comparison_df.transaction_from]
@@ -158,7 +152,7 @@ function main_full_analysis()
             ],
         ]
 
-        DataFrames.rename!(final_comparison, :TTC_pu => :TTC_Original_pu)
+        rename!(final_comparison, :TTC_pu => :TTC_Original_pu)
 
         println("\n="^50)
         println("FINAL TTC COMPARISON (Canonical RN-to-RN Transactions)")
@@ -166,7 +160,7 @@ function main_full_analysis()
         println(final_comparison)
 
         # Export comparison
-        output_path_comparison = joinpath(data_dir, "TTC_Comparison_QP.csv")
+        output_path_comparison = joinpath(output_data_dir, "TTC_Comparison_QP.csv")
         CSV.write(output_path_comparison, final_comparison)
         println("\nTTC comparison exported to CSV: $output_path_comparison")
     else
@@ -175,17 +169,17 @@ function main_full_analysis()
     end
 
     # --- Final Exports ---
-    output_path_repnodes = joinpath(data_dir, "Representative_Nodes_QP.csv")
+    output_path_repnodes = joinpath(output_data_dir, "Representative_Nodes_QP.csv")
     CSV.write(output_path_repnodes, rep_nodes_df)
 
-    output_path_ttc = joinpath(data_dir, "TTC_Original_Network_QP.csv")
+    output_path_ttc = joinpath(output_data_dir, "TTC_Original_Network_QP.csv")
     CSV.write(output_path_ttc, ttc_rn_original) # Exporting only the canonical RN transactions
 
-    output_path_ptdf_reduced = joinpath(data_dir, "PTDF_Reduced_Network_QP.csv")
+    output_path_ptdf_reduced = joinpath(output_data_dir, "PTDF_Reduced_Network_QP.csv")
     CSV.write(output_path_ptdf_reduced, ptdf_reduced_results)
 
     if !isnothing(equivalent_capacities_df)
-        output_path_eq_cap = joinpath(data_dir, "Equivalent_Capacities_QP.csv")  # Renamed to indicate QP
+        output_path_eq_cap = joinpath(output_data_dir, "Equivalent_Capacities_QP.csv")  # Renamed to indicate QP
         CSV.write(output_path_eq_cap, equivalent_capacities_df)
         println("Equivalent capacities exported to CSV: $output_path_eq_cap")
     end

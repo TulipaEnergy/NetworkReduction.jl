@@ -6,15 +6,15 @@
 Export a CSV file containing the mapping between old bus names and new numerical IDs.
 
 # Arguments
-- `node_info::DataFrames.DataFrame`: Node information with old_name and new_id columns
+- `node_info::DataFrame`: Node information with old_name and new_id columns
 - `export_path::String`: Path where the CSV file will be saved
 
 # Output CSV Format
 - old_name: Original bus names from input data
 - new_id: Numerical IDs assigned during processing
 """
-function export_bus_id_map(node_info::DataFrames.DataFrame, export_path::String)
-    bus_map_df = DataFrames.select(node_info, :old_name, :new_id)
+function export_bus_id_map(node_info::DataFrame, export_path::String)
+    bus_map_df = select(node_info, :old_name, :new_id)
     CSV.write(export_path, bus_map_df)
     println("Bus ID map exported to CSV: $export_path")
 end
@@ -25,8 +25,8 @@ end
 Export comprehensive line information including both original names and numerical IDs.
 
 # Arguments
-- `lines_df::DataFrames.DataFrame`: Regular transmission lines data
-- `tielines_df::DataFrames.DataFrame`: Tie lines data
+- `lines_df::DataFrame`: Regular transmission lines data
+- `tielines_df::DataFrame`: Tie lines data
 - `export_path::String`: Path where the CSV file will be saved
 
 # Output CSV Columns
@@ -40,12 +40,12 @@ Export comprehensive line information including both original names and numerica
 - IsTieLine: Boolean flag indicating if this is a tie line
 """
 function export_detailed_line_info(
-    lines_df::DataFrames.DataFrame,
-    tielines_df::DataFrames.DataFrame,
+    lines_df::DataFrame,
+    tielines_df::DataFrame,
     export_path::String,
 )
     # Combine regular and tie lines
-    all_lines = DataFrames.vcat(lines_df, tielines_df, cols = :union)
+    all_lines = vcat(lines_df, tielines_df, cols = :union)
 
     # Select and reorder the most relevant columns for line tracking
     line_info_df = all_lines[
@@ -68,7 +68,7 @@ function export_detailed_line_info(
     ]
 
     # Rename new ID columns for clarity in the export
-    DataFrames.rename!(line_info_df, :From => :New_ID_From, :To => :New_ID_To)
+    rename!(line_info_df, :From => :New_ID_From, :To => :New_ID_To)
 
     CSV.write(export_path, line_info_df)
     println("Detailed line information exported to CSV: $export_path")

@@ -7,17 +7,17 @@ Form the network admittance matrix (Y-bus) including shunt elements.
 Returns a sparse complex matrix representing the network admittance.
 """
 function form_ybus_with_shunt(
-    lines_df::DataFrames.DataFrame,
-    tie_lines_df::DataFrames.DataFrame,
-    node_info::DataFrames.DataFrame,
+    lines_df::DataFrame,
+    tie_lines_df::DataFrame,
+    node_info::DataFrame,
     Sbase::Float64,
 )
-    n_buses = DataFrames.nrow(node_info)
-    Ybus = SparseArrays.spzeros(ComplexF64, n_buses, n_buses)
+    n_buses = nrow(node_info)
+    Ybus = spzeros(ComplexF64, n_buses, n_buses)
 
-    all_lines = DataFrames.vcat(lines_df, tie_lines_df, cols = :union)
+    all_lines = vcat(lines_df, tie_lines_df, cols = :union)
 
-    for line in DataFrames.eachrow(all_lines)
+    for line in eachrow(all_lines)
         i = line.From
         j = line.To
 
@@ -25,7 +25,7 @@ function form_ybus_with_shunt(
         X_pu = line.X_pu
         B_shunt_pu = line.B_pu
 
-        z_series = LinearAlgebra.complex(R_pu, X_pu)
+        z_series = complex(R_pu, X_pu)
         y_series = 1 / z_series
         y_shunt = im * B_shunt_pu / 2
 
@@ -35,8 +35,8 @@ function form_ybus_with_shunt(
         Ybus[j, i] -= y_series
     end
 
-    for (bus_idx, bus_row) in enumerate(DataFrames.eachrow(node_info))
-        Ybus[bus_idx, bus_idx] += LinearAlgebra.complex(bus_row.GS_pu, bus_row.BS_pu)
+    for (bus_idx, bus_row) in enumerate(eachrow(node_info))
+        Ybus[bus_idx, bus_idx] += complex(bus_row.GS_pu, bus_row.BS_pu)
     end
 
     return Ybus

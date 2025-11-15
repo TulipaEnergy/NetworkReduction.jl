@@ -7,7 +7,7 @@ Calculate PTDF matrix for a specific transaction using DC power flow approximati
 Note: Function signature needs to be corrected - current implementation has parameter mismatches.
 """
 function calculate_ptdfs_dc_power_flow(
-    Ybus::SparseArrays.SparseMatrixCSC{ComplexF64},
+    Ybus::SparseMatrixCSC{ComplexF64},
     from_bus::Int,
     to_bus::Int,
 )
@@ -21,7 +21,7 @@ function calculate_ptdfs_dc_power_flow(
     slack_bus = to_bus
 
     # Create susceptance matrix B (negative imaginary part of Ybus)
-    B = -LinearAlgebra.imag.(LinearAlgebra.Matrix(Ybus))
+    B = -imag.(Matrix(Ybus))
 
     # Remove slack bus row and column
     non_slack_buses = setdiff(1:N, slack_bus)
@@ -31,11 +31,11 @@ function calculate_ptdfs_dc_power_flow(
 
     # Calculate inverse of reduced B matrix with proper error handling
     try
-        B_reduced_inv = LinearAlgebra.inv(B_reduced)
+        B_reduced_inv = inv(B_reduced)
     catch e
         if isa(e, SingularException)
             @warn "B matrix is singular for transaction $from_bus->$to_bus, using pseudoinverse"
-            B_reduced_inv = LinearAlgebra.pinv(B_reduced)
+            B_reduced_inv = pinv(B_reduced)
         else
             rethrow(e)
         end
@@ -82,16 +82,16 @@ Calculate PTDFs for all canonical transactions (A->B where A < B) in the origina
 Note: Function signature corrected from original implementation.
 """
 function calculate_all_ptdfs_original(
-    Ybus::SparseArrays.SparseMatrixCSC{ComplexF64},
-    lines_df::DataFrames.DataFrame,
-    tie_lines_df::DataFrames.DataFrame,
+    Ybus::SparseMatrixCSC{ComplexF64},
+    lines_df::DataFrame,
+    tie_lines_df::DataFrame,
 )
     n_buses = size(Ybus, 1)
 
-    all_lines = DataFrames.vcat(lines_df, tie_lines_df, cols = :union)
+    all_lines = vcat(lines_df, tie_lines_df, cols = :union)
 
     line_capacities = Dict{Tuple{Int,Int},Float64}()
-    for line in DataFrames.eachrow(all_lines)
+    for line in eachrow(all_lines)
         line_capacities[(line.From, line.To)] = line.Capacity_pu
         line_capacities[(line.To, line.From)] = line.Capacity_pu
     end
@@ -105,7 +105,7 @@ function calculate_all_ptdfs_original(
         end
     end
 
-    ptdf_results = DataFrames.DataFrame(
+    ptdf_results = DataFrame(
         transaction_from = Int[],
         transaction_to = Int[],
         line_from = Int[],
@@ -147,7 +147,7 @@ end
 Calculate PTDFs for canonical transactions between representative nodes using Kron-reduced matrix.
 """
 function calculate_ptdfs_reduced(
-    Y_kron::SparseArrays.SparseMatrixCSC{ComplexF64},
+    Y_kron::SparseMatrixCSC{ComplexF64},
     rep_node_ids::Vector{Int},
 )
     N_R = size(Y_kron, 1)
@@ -165,7 +165,7 @@ function calculate_ptdfs_reduced(
         end
     end
 
-    ptdf_reduced_results = DataFrames.DataFrame(
+    ptdf_reduced_results = DataFrame(
         transaction_from_reduced = Int[],
         transaction_to_reduced = Int[],
         transaction_from_orig = Int[],
@@ -187,7 +187,7 @@ function calculate_ptdfs_reduced(
         for i_r = 1:N_R
             for j_r = 1:N_R
                 # Only consider synthetic lines with a non-zero susceptance component
-                if i_r != j_r && abs(-LinearAlgebra.imag(Y_kron[i_r, j_r])) > 1e-8
+                if i_r != j_r && abs(-imag(Y_kron[i_r, j_r])) > 1e-8
                     ptdf_value = PTDF_matrix[i_r, j_r]
 
                     # Map reduced indices back to original IDs for tracking
