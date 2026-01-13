@@ -9,6 +9,8 @@ using Statistics
 using JuMP
 using Ipopt
 using MathOptInterface
+using Revise
+using CPLEX
 
 export load_excel_data,
     clean_line_data,
@@ -27,7 +29,12 @@ export load_excel_data,
     debug_optimization_data,
     export_bus_id_map,
     export_detailed_line_info,
-    main_full_analysis
+    main_full_analysis,
+    config,
+    CONFIG
+
+#Configuration fie
+include("config.jl")
 
 # Data loading and cleaning
 include("data-loading.jl")

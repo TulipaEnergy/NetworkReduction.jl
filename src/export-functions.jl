@@ -53,9 +53,9 @@ function export_detailed_line_info(
         [
             :EIC_Code,
             :From_node,
-            :To_node, # Old Bus Names
+            :To_node,       # Old Bus Names
             :From,
-            :To,           # New Bus IDs
+            :To,            # New Bus IDs
             :Voltage_level,
             :Length_km,
             :Capacity_MW,
