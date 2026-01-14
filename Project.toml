@@ -1,7 +1,7 @@
 name = "NetworkReduction"
 uuid = "8d6c9889-004b-5ffc-a588-babdd84958c6"
-authors = ["Germán Morales-España <german.morales@tno.nl>", " Juan Giraldo Chavarriaga <juan.giraldo@tno.nl>", " Muhammad Numan <muhammad.numan@ucd.ie>", " Ni Wang <ni.wang@tno.nl>"]
 version = "0.1.0"
+authors = ["Germán Morales-España <german.morales@tno.nl>", " Juan Giraldo Chavarriaga <juan.giraldo@tno.nl>", " Muhammad Numan <muhammad.numan@ucd.ie>", " Ni Wang <ni.wang@tno.nl>"]
 
 [deps]
 CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"
@@ -21,6 +21,7 @@ XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 [compat]
 CSV = "0.10"
 DataFrames = "1"
+Gurobi = "1"
 Ipopt = "1"
 JuMP = "1"
 MathOptInterface = "1"
